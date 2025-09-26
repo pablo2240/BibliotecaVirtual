@@ -1,0 +1,33 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Web
+
+<PageTitle>Biblioteca Virtual</PageTitle>
+
+<div class="card">
+    <h1>🏠 Bienvenido a la Biblioteca Virtual</h1>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <h3>📚 ¿Qué puedes hacer?</h3>
+                <ul>
+                    <li><strong>Registrarte:</strong> Crea tu cuenta como estudiante o docente</li>
+                    <li><strong>Buscar libros:</strong> Explora nuestro catálogo por título, autor o categoría</li>
+                    <li><strong>Reservar libros:</strong> Reserva los libros que necesites</li>
+                    <li><strong>Ver reportes:</strong> Consulta el estado de los préstamos</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <h3>🚀 Accesos Rápidos</h3>
+                <div class="d-grid gap-2">
+                    <a href="/registro" class="btn btn-primary">👤 Registrarse</a>
+                    <a href="/login" class="btn btn-outline-primary">🔐 Iniciar Sesión</a>
+                    <a href="/catalogo" class="btn btn-outline-secondary">📖 Ver Catálogo</a>
+                    <a href="/reportes" class="btn btn-outline-info">📊 Ver Reportes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

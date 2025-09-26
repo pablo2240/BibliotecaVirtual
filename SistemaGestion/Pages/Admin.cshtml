@@ -1,0 +1,291 @@
+﻿@page
+@model AdminModel
+@{
+    ViewData["Title"] = "Administración";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <span class="emoji-icon">⚙️</span>Panel de Administración
+    </h1>
+</div>
+
+@if (Context.Session.GetString("UsuarioRole") != "admin")
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-shield-exclamation"></i>
+        Acceso denegado. Solo los administradores pueden acceder a esta página.
+    </div>
+}
+else
+{
+    @if (Model.Message != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> @Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Estadísticas del Admin -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Cursos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalCursos</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-book text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Usuarios
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalUsuarios</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people text-success" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Matrículas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalMatriculas</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-square text-info" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs de Administración -->
+    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="cursos-tab" data-bs-toggle="tab" data-bs-target="#cursos" type="button" role="tab">
+                <i class="bi bi-book"></i> Gestionar Cursos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="usuarios-tab" data-bs-toggle="tab" data-bs-target="#usuarios" type="button" role="tab">
+                <i class="bi bi-people"></i> Ver Usuarios
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="prestamos-tab" data-bs-toggle="tab" data-bs-target="#prestamos" type="button" role="tab">
+                <i class="bi bi-arrow-return-left"></i> Devolución Préstamos
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-4" id="adminTabsContent">
+        <!-- Tab Cursos -->
+        <div class="tab-pane fade show active" id="cursos" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>📚 Gestión de Cursos</h4>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoCursoModal">
+                    <i class="bi bi-plus"></i> Nuevo Curso
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Profesor</th>
+                            <th>Precio</th>
+                            <th>Cupos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var curso in Model.Cursos)
+                        {
+                            <tr>
+                                <td>@curso.Id</td>
+                                <td>@curso.Title</td>
+                                <td>@curso.Teacher</td>
+                                <td>$@curso.Price</td>
+                                <td>@curso.Seats</td>
+                                <td>
+                                    <form method="post" asp-page-handler="EliminarCurso" class="d-inline">
+                                        <input type="hidden" name="cursoId" value="@curso.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('¿Eliminar este curso?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab Usuarios -->
+        <div class="tab-pane fade" id="usuarios" role="tabpanel">
+            <h4>👥 Lista de Usuarios</h4>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Fecha Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var usuario in Model.Usuarios)
+                        {
+                            <tr>
+                                <td>@usuario.Id</td>
+                                <td>@usuario.Name</td>
+                                <td>@usuario.Email</td>
+                                <td>
+                                    <span class="badge bg-@(usuario.Role == "admin" ? "danger" : "success")">
+                                        @usuario.Role
+                                    </span>
+                                </td>
+                                <td>@usuario.Created_at.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab Préstamos -->
+        <div class="tab-pane fade" id="prestamos" role="tabpanel">
+            <h4>📖 Devolución de Préstamos</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Devolver Préstamo</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" asp-page-handler="DevolverPrestamo">
+                                <div class="mb-3">
+                                    <label class="form-label">ID del Préstamo:</label>
+                                    <input type="number" name="prestamoId" class="form-control" required
+                                           placeholder="Ingrese el ID del préstamo">
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-arrow-return-left"></i> Devolver Préstamo
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6>💡 Información:</h6>
+                            <ul class="small">
+                                <li>Ingrese el ID del préstamo que desea devolver</li>
+                                <li>El sistema validará automáticamente si existe</li>
+                                <li>Solo se pueden devolver préstamos activos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Curso -->
+    <div class="modal fade" id="nuevoCursoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle"></i> Nuevo Curso
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" asp-page-handler="CrearCurso">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Título:</label>
+                                    <input type="text" name="titulo" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Profesor:</label>
+                                    <input type="text" name="profesor" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio:</label>
+                                    <input type="number" step="0.01" name="precio" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Cupos:</label>
+                                    <input type="number" name="cupos" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción:</label>
+                            <textarea name="descripcion" class="form-control" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Crear Curso
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

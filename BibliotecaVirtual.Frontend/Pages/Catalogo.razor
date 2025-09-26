@@ -1,0 +1,168 @@
+﻿@page "/catalogo"
+@using BibliotecaVirtual.Frontend.Models
+@using BibliotecaVirtual.Frontend.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject IApiService ApiService
+
+<PageTitle>Catálogo - Biblioteca Virtual</PageTitle>
+
+<div class="card">
+    <h2>📖 Catálogo de Libros</h2>
+    
+    <!-- Formulario de búsqueda -->
+    <EditForm Model="@busqueda" OnValidSubmit="@BuscarLibros">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="titulo" class="form-label">Buscar por Título:</label>
+                    <InputText id="titulo" class="form-control" @bind-Value="busqueda.Titulo" placeholder="Ingresa el título..." />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="autor" class="form-label">Buscar por Autor:</label>
+                    <InputText id="autor" class="form-control" @bind-Value="busqueda.Autor" placeholder="Ingresa el autor..." />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="categoria" class="form-label">Buscar por Categoría:</label>
+                    <InputText id="categoria" class="form-control" @bind-Value="busqueda.Categoria" placeholder="Ingresa la categoría..." />
+                </div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary" disabled="@cargando">
+                @if (cargando)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                🔍 Buscar Libros
+            </button>
+            <button type="button" class="btn btn-outline-secondary ms-2" @onclick="LimpiarBusqueda">
+                🗑️ Limpiar
+            </button>
+        </div>
+    </EditForm>
+
+    <!-- Resultados -->
+    @if (cargando)
+    {
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2">Cargando libros...</p>
+        </div>
+    }
+    else if (libros.Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <h4>📚 Resultados (@libros.Count libros encontrados)</h4>
+            </div>
+        </div>
+        
+        <div class="row">
+            @foreach (var libro in libros)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="book-card">
+                        <h5>@libro.Titulo</h5>
+                        <p><strong>Autor:</strong> @libro.Autor</p>
+                        <p><strong>Categoría:</strong> @libro.Categoria</p>
+                        <p><strong>ID:</strong> @libro.Id</p>
+                        <span class="book-status @ObtenerClaseEstado(libro.Estado)">
+                            @ObtenerTextoEstado(libro.Estado)
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (!primeraVez)
+    {
+        <div class="alert alert-info">
+            📚 No se encontraron libros con esos criterios.
+        </div>
+    }
+</div>
+
+@code {
+    private ConsultaLibroViewModel busqueda = new();
+    private List<Libro> libros = new();
+    private bool cargando = false;
+    private bool primeraVez = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarTodosLosLibros();
+    }
+
+    private async Task BuscarLibros()
+    {
+        cargando = true;
+        primeraVez = false;
+
+        try
+        {
+            libros = await ApiService.ConsultarCatalogoAsync(busqueda);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al buscar libros: {ex.Message}");
+            libros = new List<Libro>();
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CargarTodosLosLibros()
+    {
+        cargando = true;
+        
+        try
+        {
+            libros = await ApiService.ConsultarCatalogoAsync(new ConsultaLibroViewModel());
+            primeraVez = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar libros: {ex.Message}");
+            libros = new List<Libro>();
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void LimpiarBusqueda()
+    {
+        busqueda = new ConsultaLibroViewModel();
+        CargarTodosLosLibros();
+    }
+
+    private string ObtenerClaseEstado(int estado)
+    {
+        return estado switch
+        {
+            1 => "status-disponible",
+            2 => "status-prestado",
+            3 => "status-reservado",
+            _ => ""
+        };
+    }
+
+    private string ObtenerTextoEstado(int estado)
+    {
+        return estado switch
+        {
+            1 => "Disponible",
+            2 => "Prestado",
+            3 => "Reservado",
+            _ => "Desconocido"
+        };
+    }
+}

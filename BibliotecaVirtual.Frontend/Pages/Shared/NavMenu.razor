@@ -1,0 +1,141 @@
+﻿@using BibliotecaVirtual.Frontend.Models  
+@using BibliotecaVirtual.Frontend.Services  
+@inject UsuarioSesionService UsuarioSesion  
+@inject ApiService ApiService  
+
+<div class="top-row ps-3 navbar navbar-dark">  
+    <div class="container-fluid">  
+        <a class="navbar-brand" href="">📚 Biblioteca</a>  
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">  
+            <span class="navbar-toggler-icon"></span>  
+        </button>  
+    </div>  
+</div>  
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="CollapseNavMenu">  
+    <nav class="flex-column">  
+        <div class="nav-item px-3">  
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">  
+                <span class="oi oi-home" aria-hidden="true"></span> Inicio  
+            </NavLink>  
+        </div>  
+        <div class="nav-item px-3">  
+            <NavLink class="nav-link" href="registro">  
+                <span class="oi oi-person" aria-hidden="true"></span> Registro  
+            </NavLink>  
+        </div>  
+        <div class="nav-item px-3">  
+            <NavLink class="nav-link" href="login">  
+                <span class="oi oi-account-login" aria-hidden="true"></span> Login  
+            </NavLink>  
+        </div>  
+        <div class="nav-item px-3">  
+            <NavLink class="nav-link" href="catalogo">  
+                <span class="oi oi-book" aria-hidden="true"></span> Catálogo  
+            </NavLink>  
+        </div>  
+        <div class="nav-item px-3">  
+            <NavLink class="nav-link" href="prestamos">  
+                <span class="oi oi-clipboard" aria-hidden="true"></span> Préstamos  
+            </NavLink>  
+        </div>  
+        <div class="nav-item px-3">  
+            <NavLink class="nav-link" href="reportes">  
+                <span class="oi oi-bar-chart" aria-hidden="true"></span> Reportes  
+            </NavLink>  
+        </div>  
+    </nav>  
+</div>  
+
+<nav>  
+    <ul class="nav flex-column">  
+        <li class="nav-item">  
+            <a class="nav-link" href="/">🏠 Inicio</a>  
+        </li>  
+        <li class="nav-item">  
+            <a class="nav-link" href="/catalogo">📖 Catálogo</a>  
+        </li>  
+        <li class="nav-item">  
+            <a class="nav-link" href="/reportes">📊 Reportes</a>  
+        </li>  
+        @if (UsuarioSesion.UsuarioActual != null)  
+        {  
+            <li class="nav-item">  
+                <a class="nav-link" href="/perfil">👤 Mi Perfil</a>  
+            </li>  
+            <li class="nav-item">  
+                <a class="nav-link" href="#" @onclick="CerrarSesion">🚪 Cerrar Sesión</a>  
+            </li>  
+        }  
+        else  
+        {  
+            <li class="nav-item">  
+                <a class="nav-link" href="/login">🔐 Iniciar Sesión</a>  
+            </li>  
+            <li class="nav-item">  
+                <a class="nav-link" href="/registro">📝 Registrarse</a>  
+            </li>  
+        }  
+    </ul>  
+</nav>  
+
+@code {  
+    private bool collapseNavMenu = true;  
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;  
+
+    private void ToggleNavMenu()  
+    {  
+        collapseNavMenu = !collapseNavMenu;  
+    }  
+
+    private void CollapseNavMenu()  
+    {  
+        collapseNavMenu = true;  
+    }  
+
+    private void CerrarSesion()  
+    {  
+        UsuarioSesion.CerrarSesion();  
+        // Opcional: redirigir a inicio  
+        // NavigationManager.NavigateTo("/");  
+    }  
+
+    private string mensaje = "";  
+    private bool esExito = false;  
+
+    // Ejemplo en ReservarLibro:  
+    private async Task ReservarLibro(int libroId)  
+    {  
+        mensaje = "";  
+        var usuarioId = UsuarioSesion.UsuarioActual?.Id ?? 0;  
+        if (usuarioId == 0)  
+        {  
+            mensaje = "Debes iniciar sesión para reservar.";  
+            esExito = false;  
+            return;  
+        }  
+        var resultado = await ApiService.ReservarLibroAsync(new PrestamoViewModel { LibroId = libroId, UsuarioId = usuarioId });  
+        if (resultado)  
+        {  
+            mensaje = "Libro reservado exitosamente.";  
+            esExito = true;  
+        }  
+        else  
+        {  
+            mensaje = "No se pudo reservar el libro.";  
+            esExito = false;  
+        }  
+        await CargarTodosLosLibros();  
+    }  
+
+    private async Task CargarTodosLosLibros()  
+    {  
+        // Implementación de ejemplo:  
+        // Aquí deberías agregar la lógica para cargar todos los libros.  
+        // Esto podría incluir una llamada a un servicio o API para obtener los datos.  
+        // Por ejemplo:  
+        // var libros = await ApiService.ObtenerTodosLosLibrosAsync();  
+        // Actualiza el estado de la interfaz de usuario con los datos obtenidos.  
+    }  
+}

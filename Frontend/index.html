@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 Biblioteca Virtual</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Biblioteca Virtual</h1>
+            <p class="subtitle">Sistema de Gestión de Libros y Préstamos</p>
+        </header>
+
+        <!-- Navegación -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('login')">🔐 Iniciar Sesión</button>
+            <button class="tab-btn" onclick="showTab('registro')">👤 Registro</button>
+            <button class="tab-btn" onclick="showTab('catalogo')">📖 Catálogo</button>
+            <button class="tab-btn" onclick="showTab('prestamos')">📋 Préstamos</button>
+            <button class="tab-btn" onclick="showTab('reportes')">📊 Reportes</button>
+        </div>
+
+        <!-- Tab Login -->
+        <div id="login" class="tab-content active">
+            <h2>🔐 Iniciar Sesión</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Correo Electrónico:</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña:</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
+            <div id="loginMessage"></div>
+        </div>
+
+        <!-- Tab Registro -->
+        <div id="registro" class="tab-content">
+            <h2>👤 Registro de Usuario</h2>
+            <form id="registroForm">
+                <div class="form-group">
+                    <label for="registroNombre">Nombre Completo:</label>
+                    <input type="text" id="registroNombre" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="registroEmail">Correo Electrónico:</label>
+                        <input type="email" id="registroEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registroTipo">Tipo de Usuario:</label>
+                        <select id="registroTipo" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="1">Estudiante</option>
+                            <option value="2">Docente</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="registroPassword">Contraseña:</label>
+                    <input type="password" id="registroPassword" minlength="6" required>
+                </div>
+                <button type="submit">Registrarse</button>
+            </form>
+            <div id="registroMessage"></div>
+        </div>
+
+        <!-- Tab Catálogo -->
+        <div id="catalogo" class="tab-content">
+            <h2>📖 Catálogo de Libros</h2>
+            
+            <!-- Filtros de búsqueda -->
+            <form id="busquedaForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="buscarTitulo">Buscar por Título:</label>
+                        <input type="text" id="buscarTitulo" placeholder="Ingresa el título del libro...">
+                    </div>
+                    <div class="form-group">
+                        <label for="buscarAutor">Buscar por Autor:</label>
+                        <input type="text" id="buscarAutor" placeholder="Ingresa el nombre del autor...">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="buscarCategoria">Buscar por Categoría:</label>
+                        <input type="text" id="buscarCategoria" placeholder="Ingresa la categoría...">
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit">🔍 Buscar Libros</button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="catalogoResults">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Cargando catálogo...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Préstamos -->
+        <div id="prestamos" class="tab-content">
+            <div id="userSection" style="display: none;">
+                <div class="user-info">
+                    <h3>Usuario Logueado</h3>
+                    <p id="currentUserInfo"></p>
+                    <button class="btn-secondary" onclick="logout()">Cerrar Sesión</button>
+                </div>
+
+                <h2>📋 Gestión de Préstamos</h2>
+                
+                <!-- Reservar Libro -->
+                <h3>Reservar Libro</h3>
+                <form id="reservaForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="libroIdReserva">ID del Libro:</label>
+                            <input type="number" id="libroIdReserva" required>
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit">📚 Reservar Libro</button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Devolver Libro -->
+                <h3>Devolver Libro</h3>
+                <form id="devolucionForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prestamoIdDevolucion">ID del Préstamo:</label>
+                            <input type="number" id="prestamoIdDevolucion" required>
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit">↩️ Devolver Libro</button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Prestar Libro (Solo para bibliotecarios) -->
+                <h3>Prestar Libro</h3>
+                <form id="prestamoForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="libroIdPrestamo">ID del Libro:</label>
+                            <input type="number" id="libroIdPrestamo" required>
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit">✅ Confirmar Préstamo</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="loginPrompt">
+                <div class="message">
+                    <p>⚠️ Debes iniciar sesión para gestionar préstamos.</p>
+                    <button onclick="showTab('login')">Ir a Iniciar Sesión</button>
+                </div>
+            </div>
+
+            <div id="prestamosMessage"></div>
+        </div>
+
+        <!-- Tab Reportes -->
+        <div id="reportes" class="tab-content">
+            <h2>📊 Reporte de Préstamos Activos</h2>
+            <button onclick="cargarReporte()">🔄 Actualizar Reporte</button>
+            
+            <div id="reporteResults">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Cargando reporte...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

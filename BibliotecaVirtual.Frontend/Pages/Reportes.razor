@@ -1,0 +1,151 @@
+﻿@page "/reportes"
+@using BibliotecaVirtual.Frontend.Models
+@using BibliotecaVirtual.Frontend.Services
+@using Microsoft.AspNetCore.Components.Web
+@inject IApiService ApiService
+
+<PageTitle>Reportes - Biblioteca Virtual</PageTitle>
+
+<div class="card">
+    <h2>📊 Reporte de Préstamos Activos</h2>
+    
+    <div class="mb-3">
+        <button class="btn btn-primary" @onclick="CargarReporte" disabled="@cargando">
+            @if (cargando)
+            {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            🔄 Actualizar Reporte
+        </button>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2">Generando reporte...</p>
+        </div>
+    }
+    else if (prestamos.Any())
+    {
+        <div class="alert alert-info">
+            <h4>📋 Préstamos Activos (@prestamos.Count)</h4>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Libro</th>
+                        <th>Fecha Préstamo</th>
+                        <th>Estado</th>
+                        <th>Días Transcurridos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var prestamo in prestamos)
+                    {
+                        <tr>
+                            <td>@prestamo.Id</td>
+                            <td>@prestamo.UsuarioNombre</td>
+                            <td>@prestamo.LibroTitulo</td>
+                            <td>@prestamo.FechaInicio.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="book-status status-prestado">
+                                    @ObtenerTextoEstado(prestamo.Estado)
+                                </span>
+                            </td>
+                            <td>
+                                @{
+                                    var dias = (DateTime.Now - prestamo.FechaInicio).Days;
+                                    var clase = dias > 30 ? "text-danger fw-bold" : dias > 15 ? "text-warning" : "text-success";
+                                }
+                                <span class="@clase">@dias días</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estadísticas resumidas -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">📚 Total Préstamos</h5>
+                        <h2 class="text-primary">@prestamos.Count</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">⏰ Préstamos Recientes</h5>
+                        <h2 class="text-success">@prestamos.Count(p => (DateTime.Now - p.FechaInicio).Days <= 15)</h2>
+                        <small>Últimos 15 días</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">⚠️ Préstamos Vencidos</h5>
+                        <h2 class="text-danger">@prestamos.Count(p => (DateTime.Now - p.FechaInicio).Days > 30)</h2>
+                        <small>Más de 30 días</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!primeraVez)
+    {
+        <div class="alert alert-info">
+            📋 No hay préstamos activos en este momento.
+        </div>
+    }
+</div>
+
+@code {
+    private List<ReportePrestamo> prestamos = new();
+    private bool cargando = false;
+    private bool primeraVez = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarReporte();
+    }
+
+    private async Task CargarReporte()
+    {
+        cargando = true;
+        primeraVez = false;
+
+        try
+        {
+            prestamos = await ApiService.GenerarReporteActivosAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar reporte: {ex.Message}");
+            prestamos = new List<ReportePrestamo>();
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private string ObtenerTextoEstado(int estado)
+    {
+        return estado switch
+        {
+            1 => "Activo",
+            2 => "Devuelto",
+            3 => "Vencido",
+            _ => "Desconocido"
+        };
+    }
+}

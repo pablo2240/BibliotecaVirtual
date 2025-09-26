@@ -1,0 +1,110 @@
+﻿@page "/registro"
+@using BibliotecaVirtual.Frontend.Models
+@using BibliotecaVirtual.Frontend.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject IApiService ApiService
+
+<PageTitle>Registro - Biblioteca Virtual</PageTitle>
+
+<div class="card">
+    <h2>👤 Registro de Usuario</h2>
+    
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(esExito ? "alert-success" : "alert-danger")">
+            @mensaje
+        </div>
+    }
+
+    <EditForm Model="@modelo" OnValidSubmit="@RegistrarUsuario">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger" />
+
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre Completo:</label>
+            <InputText id="nombre" class="form-control" @bind-Value="modelo.Nombre" />
+            <ValidationMessage For="@(() => modelo.Nombre)" class="text-danger" />
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="correo" class="form-label">Correo Electrónico:</label>
+                    <InputText id="correo" class="form-control" @bind-Value="modelo.Correo" type="email" />
+                    <ValidationMessage For="@(() => modelo.Correo)" class="text-danger" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="tipo" class="form-label">Tipo de Usuario:</label>
+                    <InputSelect id="tipo" class="form-control" @bind-Value="modelo.Tipo">
+                        <option value="0">Seleccionar...</option>
+                        <option value="1">Estudiante</option>
+                        <option value="2">Docente</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => modelo.Tipo)" class="text-danger" />
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="contrasena" class="form-label">Contraseña:</label>
+            <InputText id="contrasena" class="form-control" @bind-Value="modelo.Contrasena" type="password" />
+            <ValidationMessage For="@(() => modelo.Contrasena)" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary" disabled="@cargando">
+                @if (cargando)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                Registrarse
+            </button>
+        </div>
+    </EditForm>
+
+    <div class="mt-3">
+        <p>¿Ya tienes cuenta? <a href="/login">Iniciar sesión aquí</a></p>
+    </div>
+</div>
+
+@code {
+    private RegistroUsuarioViewModel modelo = new();
+    private bool cargando = false;
+    private string mensaje = "";
+    private bool esExito = false;
+
+    private async Task RegistrarUsuario()
+    {
+        cargando = true;
+        mensaje = "";
+
+        try
+        {
+            var resultado = await ApiService.RegistrarUsuarioAsync(modelo);
+            
+            if (resultado)
+            {
+                mensaje = "✅ Usuario registrado exitosamente";
+                esExito = true;
+                modelo = new(); // Limpiar formulario
+            }
+            else
+            {
+                mensaje = "❌ Error al registrar usuario. El correo puede ya estar registrado.";
+                esExito = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"❌ Error: {ex.Message}";
+            esExito = false;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}

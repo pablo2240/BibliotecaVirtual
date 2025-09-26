@@ -1,0 +1,96 @@
+﻿@page
+@model MisCursosModel
+@{
+    ViewData["Title"] = "Mis Cursos";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <span class="emoji-icon">🎒</span>Mis Cursos
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <span class="badge bg-primary fs-6">Total: @Model.Matriculas.Count</span>
+        </div>
+    </div>
+</div>
+
+@if (Model.Message != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @Model.Message
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (Model.ErrorMessage != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!Model.Matriculas.Any())
+{
+    <div class="text-center py-5">
+        <i class="bi bi-backpack" style="font-size: 5rem; color: #ccc;"></i>
+        <h3 class="mt-4 text-muted">No tienes cursos matriculados</h3>
+        <p class="lead">¡Explora nuestro catálogo y encuentra el curso perfecto para ti!</p>
+        <a href="/Cursos" class="btn btn-primary btn-lg">
+            <i class="bi bi-search"></i> Explorar Cursos
+        </a>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var matricula in Model.Matriculas)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow card-hover border-success">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">@matricula.Title</h5>
+                            <span class="badge bg-light text-success">✅ Activo</span>
+                        </div>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <p class="card-text flex-grow-1">@matricula.Description</p>
+
+                        <div class="mt-auto">
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">👨‍🏫 Profesor</small>
+                                    <div class="fw-bold">@matricula.Teacher</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">💰 Precio</small>
+                                    <div class="fw-bold text-success">$@matricula.Price</div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mb-3">
+                                <small class="text-muted">📅 Matriculado el:</small>
+                                <div class="fw-bold">@matricula.Created_at.ToString("dd/MM/yyyy")</div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary">
+                                    <i class="bi bi-play-circle"></i> Ir al Curso
+                                </button>
+                                <form method="post" asp-page-handler="Cancelar" class="d-inline">
+                                    <input type="hidden" name="matriculaId" value="@matricula.Id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100"
+                                            onclick="return confirm('¿Estás seguro de cancelar esta matrícula?')">
+                                        <i class="bi bi-x-circle"></i> Cancelar Matrícula
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

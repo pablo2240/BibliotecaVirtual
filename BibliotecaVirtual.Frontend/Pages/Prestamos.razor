@@ -1,0 +1,247 @@
+﻿@page "/prestamos"
+@using BibliotecaVirtual.Frontend.Models
+@using BibliotecaVirtual.Frontend.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject IApiService ApiService
+
+<PageTitle>Préstamos - Biblioteca Virtual</PageTitle>
+
+<div class="card">
+    <h2>📋 Gestión de Préstamos</h2>
+    
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert @(esExito ? "alert-success" : "alert-danger")">
+            @mensaje
+        </div>
+    }
+
+    @if (usuarioLogueado != null)
+    {
+        <div class="alert alert-info">
+            <h5>👤 Usuario Logueado</h5>
+            <p><strong>Nombre:</strong> @usuarioLogueado.Nombre</p>
+            <p><strong>Tipo:</strong> @((TipoUsuario)usuarioLogueado.Tipo)</p>
+        </div>
+    }
+
+    <!-- Sección de Reservar Libro -->
+    <div class="card mt-3">
+        <h4>📚 Reservar Libro</h4>
+        <EditForm Model="@modeloReserva" OnValidSubmit="@ReservarLibro">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="libroIdReserva" class="form-label">ID del Libro a Reservar:</label>
+                        <InputNumber id="libroIdReserva" class="form-control" @bind-Value="modeloReserva.LibroId" />
+                        <ValidationMessage For="@(() => modeloReserva.LibroId)" class="text-danger" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100" disabled="@(cargandoReserva || usuarioLogueado == null)">
+                            @if (cargandoReserva)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            📚 Reservar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+
+    <!-- Sección de Devolver Libro -->
+    <div class="card mt-3">
+        <h4>↩️ Devolver Libro</h4>
+        <EditForm Model="@modeloDevolucion" OnValidSubmit="@DevolverLibro">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="prestamoIdDevolucion" class="form-label">ID del Préstamo a Devolver:</label>
+                        <input type="number" id="prestamoIdDevolucion" class="form-control" @bind="modeloDevolucion.PrestamoId" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-success w-100" disabled="@cargandoDevolucion">
+                            @if (cargandoDevolucion)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            ↩️ Devolver
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+
+    <!-- Sección de Prestar Libro (Para bibliotecarios) -->
+    <div class="card mt-3">
+        <h4>✅ Confirmar Préstamo</h4>
+        <EditForm Model="@modeloPrestamo" OnValidSubmit="@ConfirmarPrestamo">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="libroIdPrestamo" class="form-label">ID del Libro a Prestar:</label>
+                        <input type="number" id="libroIdPrestamo" class="form-control" @bind="modeloPrestamo.LibroId" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-warning w-100" disabled="@cargandoPrestamo">
+                            @if (cargandoPrestamo)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            ✅ Prestar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+
+    @if (usuarioLogueado == null)
+    {
+        <div class="alert alert-warning mt-3">
+            <p>⚠️ Para gestionar préstamos necesitas estar logueado.</p>
+            <a href="/login" class="btn btn-primary">🔐 Ir a Login</a>
+        </div>
+    }
+</div>
+
+@code {
+    private PrestamoViewModel modeloReserva = new();
+    private DevolucionModel modeloDevolucion = new();
+    private PrestamoLibroModel modeloPrestamo = new();
+    private Usuario? usuarioLogueado = null;
+    private bool cargandoReserva = false;
+    private bool cargandoDevolucion = false;
+    private bool cargandoPrestamo = false;
+    private string mensaje = "";
+    private bool esExito = false;
+
+    public class DevolucionModel
+    {
+        public int PrestamoId { get; set; }
+    }
+
+    public class PrestamoLibroModel
+    {
+        public int LibroId { get; set; }
+    }
+
+    private async Task ReservarLibro()
+    {
+        if (usuarioLogueado == null) return;
+
+        cargandoReserva = true;
+        mensaje = "";
+
+        try
+        {
+            modeloReserva.UsuarioId = usuarioLogueado.Id;
+            var resultado = await ApiService.ReservarLibroAsync(modeloReserva);
+            
+            if (resultado)
+            {
+                mensaje = "✅ Libro reservado exitosamente";
+                esExito = true;
+                modeloReserva = new();
+            }
+            else
+            {
+                mensaje = "❌ No se pudo reservar el libro. Verifica que esté disponible.";
+                esExito = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"❌ Error: {ex.Message}";
+            esExito = false;
+        }
+        finally
+        {
+            cargandoReserva = false;
+        }
+    }
+
+    private async Task DevolverLibro()
+    {
+        cargandoDevolucion = true;
+        mensaje = "";
+
+        try
+        {
+            var resultado = await ApiService.DevolverLibroAsync(modeloDevolucion.PrestamoId);
+            
+            if (resultado)
+            {
+                mensaje = "✅ Libro devuelto exitosamente";
+                esExito = true;
+                modeloDevolucion = new();
+            }
+            else
+            {
+                mensaje = "❌ No se pudo devolver el libro. Verifica el ID del préstamo.";
+                esExito = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"❌ Error: {ex.Message}";
+            esExito = false;
+        }
+        finally
+        {
+            cargandoDevolucion = false;
+        }
+    }
+
+    private async Task ConfirmarPrestamo()
+    {
+        cargandoPrestamo = true;
+        mensaje = "";
+
+        try
+        {
+            var resultado = await ApiService.PrestarLibroAsync(modeloPrestamo.LibroId);
+            
+            if (resultado)
+            {
+                mensaje = "✅ Préstamo confirmado exitosamente";
+                esExito = true;
+                modeloPrestamo = new();
+            }
+            else
+            {
+                mensaje = "❌ No se pudo confirmar el préstamo. Verifica el ID del libro.";
+                esExito = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"❌ Error: {ex.Message}";
+            esExito = false;
+        }
+        finally
+        {
+            cargandoPrestamo = false;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Aquí podrías obtener el usuario logueado desde un servicio de estado
+        // Por simplicidad, usamos un usuario de ejemplo
+        usuarioLogueado = new Usuario { Id = 1, Nombre = "Usuario Ejemplo", Tipo = 1 };
+    }
+}

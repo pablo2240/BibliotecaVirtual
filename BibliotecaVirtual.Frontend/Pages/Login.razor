@@ -1,0 +1,106 @@
+﻿@page "/login"
+@using BibliotecaVirtual.Frontend.Models
+@using BibliotecaVirtual.Frontend.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject IApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Login - Biblioteca Virtual</PageTitle>
+
+<div class="card">
+    <h2>🔐 Iniciar Sesión</h2>
+    
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="alert alert-danger">
+            @mensaje
+        </div>
+    }
+
+    @if (usuarioActual != null)
+    {
+        <div class="alert alert-success">
+            <h4>✅ ¡Bienvenido!</h4>
+            <p><strong>Nombre:</strong> @usuarioActual.Nombre</p>
+            <p><strong>Tipo:</strong> @((TipoUsuario)usuarioActual.Tipo)</p>
+            <button class="btn btn-outline-secondary" @onclick="CerrarSesion">Cerrar Sesión</button>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="@modelo" OnValidSubmit="@IniciarSesion">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="mb-3">
+                <label for="correo" class="form-label">Correo Electrónico:</label>
+                <InputText id="correo" class="form-control" @bind-Value="modelo.Correo" type="email" />
+                <ValidationMessage For="@(() => modelo.Correo)" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="contrasena" class="form-label">Contraseña:</label>
+                <InputText id="contrasena" class="form-control" @bind-Value="modelo.Contrasena" type="password" />
+                <ValidationMessage For="@(() => modelo.Contrasena)" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary" disabled="@cargando">
+                    @if (cargando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Iniciar Sesión
+                </button>
+            </div>
+        </EditForm>
+
+        <div class="mt-3">
+            <p>¿No tienes cuenta? <a href="/registro">Registrarse aquí</a></p>
+        </div>
+    }
+</div>
+
+@code {
+    private LoginViewModel modelo = new();
+    private Usuario? usuarioActual = null;
+    private bool cargando = false;
+    private string mensaje = "";
+
+    private async Task IniciarSesion()
+    {
+        cargando = true;
+        mensaje = "";
+
+        try
+        {
+            usuarioActual = await ApiService.LoginAsync(modelo);
+            
+            if (usuarioActual == null)
+            {
+                mensaje = "❌ Credenciales inválidas";
+            }
+            else
+            {
+                modelo = new(); // Limpiar formulario
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"❌ Error: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void CerrarSesion()
+    {
+        usuarioActual = null;
+        modelo = new();
+        mensaje = "";
+    }
+}
