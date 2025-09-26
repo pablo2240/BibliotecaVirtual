@@ -9,7 +9,6 @@ builder.Services.AddServerSideBlazor();
 // Configurar HttpClient para la API
 builder.Services.AddHttpClient<IApiService, ApiService>();
 builder.Services.AddScoped<IApiService, ApiService>();
-builder.Services.AddSingleton<UsuarioSesionService>();
 
 var app = builder.Build();
 
